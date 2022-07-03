@@ -1,0 +1,28 @@
+node
+{               
+def mavenHome= tool name: "maven3.8.6"    
+  stage('checkoutcode')
+  {
+   git branch: 'development', credentialsId: '60a41641-897b-424c-933f-b34abb2fee53', url: 'https://github.com/smdraf/maven-web-application.git'
+  }
+  stage('build')
+  {
+   sh "${mavenHome}/bin/mvn clean package"
+  }
+  stage('ExecuteSonarQubeReport')
+  {
+   sh "${mavenHome}/bin/mvn sonar:sonar"   
+  }
+  stage('UploadArtifactIntoNexus')
+  {
+   sh "${mavenHome}/bin/mvn deploy"   
+  }
+  stage('DeployAppIntoTomcat')
+  {
+   sshagent(['08b8c6aa-278a-4c0f-95b6-9f7521aaa42d']) 
+  {
+  sh "scp -o StrictHostkeyChecking=no target/maven-web-application.war  ec2-user@65.0.204.233:/opt/apache-tomcat-9.0.64/webapps/"
+  }
+  }
+
+}
